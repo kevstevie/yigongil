@@ -1,22 +1,39 @@
 package com.yigongil.backend.domain.feedpost;
 
+import com.yigongil.backend.response.FeedPostResponse;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.query.Param;
 
-public interface FeedPostRepository extends Repository<FeedPost, Long> {
+@Repository
+public class FeedPostRepository {
 
-    @Query("""
-                select fp from FeedPost fp
-                where fp.study.id = :studyId
-                and fp.id < :oldestFeedPostId
-                order by fp.id desc
-            """)
-    List<FeedPost> findAllByStudyIdStartWithOldestFeedPostId(
-            @Param("studyId") Long studyId,
-            @Param("oldestFeedPostId") Long oldestFeedPostId
-    );
+    private final JpaFeedPostRepository jpaFeedPostRepository;
+    private final MemoryFeedPostRepository memoryFeedPostRepository;
 
-    FeedPost save(FeedPost feedPost);
+    public FeedPostRepository(
+            JpaFeedPostRepository jpaFeedPostRepository,
+            MemoryFeedPostRepository memoryFeedPostRepository
+    ) {
+        this.jpaFeedPostRepository = jpaFeedPostRepository;
+        this.memoryFeedPostRepository = memoryFeedPostRepository;
+    }
+
+    public void save(FeedPost feedPost) {
+        memoryFeedPostRepository.save(feedPost);
+        if (memoryFeedPostRepository.isFull()) {
+            jpaFeedPostRepository.saveAll(memoryFeedPostRepository.findAll());
+            memoryFeedPostRepository.clear();
+        }
+    }
+
+    public List<FeedPostResponse> findAllByStudyId(Long studyId, Long oldestFeedPostId) {
+        List<FeedPost> memoryFeeds = memoryFeedPostRepository.findAllByStudyIdAndDescCreatedAt(studyId);
+        List<FeedPost> savedFeeds = jpaFeedPostRepository.findAllByStudyIdStartWithOldestFeedPostId(studyId, oldestFeedPostId);
+
+        memoryFeeds.addAll(savedFeeds);
+        return memoryFeeds.stream()
+                .map(FeedPostResponse::from)
+                .toList();
+    }
 }

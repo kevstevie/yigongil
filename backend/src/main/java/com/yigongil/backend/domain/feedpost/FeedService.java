@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FeedService {
 
-    private final FeedPostRepository feedPostRepository;
+    private final JpaFeedPostRepository jpaFeedPostRepository;
     private final StudyRepository studyRepository;
 
-    public FeedService(FeedPostRepository feedPostRepository, StudyRepository studyRepository) {
-        this.feedPostRepository = feedPostRepository;
+    public FeedService(JpaFeedPostRepository jpaFeedPostRepository, StudyRepository studyRepository) {
+        this.jpaFeedPostRepository = jpaFeedPostRepository;
         this.studyRepository = studyRepository;
     }
 
@@ -29,6 +29,6 @@ public class FeedService {
                                            .content(request.content())
                                            .build();
 
-        feedPostRepository.save(regularFeedPost);
+        jpaFeedPostRepository.save(regularFeedPost);
     }
 }

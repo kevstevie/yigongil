@@ -1,6 +1,6 @@
 package com.yigongil.backend.query.feed;
 
-import com.yigongil.backend.domain.feedpost.FeedPostRepository;
+import com.yigongil.backend.domain.feedpost.JpaFeedPostRepository;
 import com.yigongil.backend.response.FeedPostResponse;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -10,15 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FeedQueryService {
 
-    private final FeedPostRepository feedPostRepository;
+    private final JpaFeedPostRepository jpaFeedPostRepository;
 
-    public FeedQueryService(FeedPostRepository feedPostRepository) {
-        this.feedPostRepository = feedPostRepository;
+    public FeedQueryService(JpaFeedPostRepository jpaFeedPostRepository) {
+        this.jpaFeedPostRepository = jpaFeedPostRepository;
     }
 
     @Transactional(readOnly = true)
     public List<FeedPostResponse> findFeedPosts(Long studyId, Long oldestFeedPostId) {
-        return feedPostRepository.findAllByStudyIdStartWithOldestFeedPostId(studyId, oldestFeedPostId)
+        return jpaFeedPostRepository.findAllByStudyIdStartWithOldestFeedPostId(studyId, oldestFeedPostId)
                                  .stream()
                                  .map(FeedPostResponse::from)
                                  .toList();
